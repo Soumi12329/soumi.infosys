@@ -1,20 +1,24 @@
-#!/bin/bash
-
-# Database credentials
-
-
-
+#!/usr/bin/env bash
 set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+SQL_DIR="$SCRIPT_DIR/SQL"
+
 DB_HOST="${DB_HOST:-localhost}"
 DB_USER="${DB_USER:-postgres}"
 DB_NAME="${DB_NAME:-postgres}"
-SQL_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/SQL" && pwd)"
+DB_PASSWORD="${DB_PASSWORD:-root}"
 
-if ! command -v psql >/dev/null 2>&1; then
-	printf 'Error: psql is not installed or is not on PATH in this Bash environment.\n' >&2
-	exit 127
+if command -v psql >/dev/null 2>&1; then
+	PSQL="$(command -v psql)"
+elif [[ -x "/c/Program Files/PostgreSQL/18/bin/psql.exe" ]]; then
+	PSQL="/c/Program Files/PostgreSQL/18/bin/psql.exe"
+else
+	echo "psql was not found. Install PostgreSQL client tools or add psql to PATH." >&2
+	exit 1
 fi
 
-psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "$SQL_DIR/SQL1.sql"
-psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "$SQL_DIR/SQL2.sql"
+
+PGPASSWORD="$DB_PASSWORD" "$PSQL" -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "$SQL_DIR/SQL1.sql"
+PGPASSWORD="$DB_PASSWORD" "$PSQL" -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -f "$SQL_DIR/SQL2.sql"
 
